@@ -141,6 +141,36 @@ class TestRateLimit:
         assert exc.value.status_code == 429
 
     @pytest.mark.asyncio
+    async def test_49_likes_does_not_hit_rate_limit(self):
+        me = _me(likes_sent_today=49)
+        target_id = str(ObjectId())
+        users = _users_col(target_doc={"_id": ObjectId(target_id)})
+        likes = _likes_col()
+
+        with (
+            patch("app.routers.likes.get_users_collection", return_value=users),
+            patch("app.routers.likes.get_likes_collection", return_value=likes),
+            patch("app.routers.likes.get_matches_collection", return_value=_matches_col()),
+        ):
+            result = await like_user(user_id=target_id, current_user=me)
+
+        assert result["matched"] is False
+
+    @pytest.mark.asyncio
+    async def test_reset_at_none_does_not_skip_limit_check(self):
+        me = _me(likes_sent_today=50, likes_reset_at=None)
+        target_id = str(ObjectId())
+        users = _users_col(target_doc={"_id": ObjectId(target_id)})
+
+        with (
+            patch("app.routers.likes.get_users_collection", return_value=users),
+            patch("app.routers.likes.get_likes_collection", return_value=_likes_col()),
+        ):
+            with pytest.raises(HTTPException) as exc:
+                await like_user(user_id=target_id, current_user=me)
+        assert exc.value.status_code == 429
+
+    @pytest.mark.asyncio
     async def test_daily_reset_rolls_counter_to_zero(self):
         yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         me = _me(likes_sent_today=50, likes_reset_at=yesterday)

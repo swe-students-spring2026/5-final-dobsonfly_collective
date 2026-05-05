@@ -52,9 +52,10 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
+            docker network create vibe-net || true
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vibe-frontend:latest
             docker stop vibe-frontend || true
             docker rm vibe-frontend || true
-            docker run -d --name vibe-frontend --env-file /opt/vibe/.env \
+            docker run -d --name vibe-frontend --network vibe-net --env-file /opt/vibe/.env \
               -e BACKEND_URL=http://vibe-backend:8000 \
               -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/vibe-frontend:latest

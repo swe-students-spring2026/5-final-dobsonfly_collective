@@ -284,6 +284,35 @@ class TestRankingAndPagination:
 # Profile shape
 # ===========================================================================
 
+class TestRobustness:
+    @pytest.mark.asyncio
+    async def test_candidate_with_no_spotify_key_does_not_crash(self):
+        me = _user_doc(top_genres=["pop"])
+        candidate = {
+            "_id": ObjectId(),
+            "display_name": "NoSpotify",
+            "age": 25,
+            "city": "NYC",
+            "bio": None,
+            "gender": None,
+            "gender_preference": None,
+            "age_range_preference": None,
+            "is_spotify_connected": True,
+            # spotify key deliberately absent
+        }
+        likes_col = _likes_collection_with([])
+        users_col = _users_collection_with([candidate])
+
+        with (
+            patch("app.routers.feed.get_likes_collection", return_value=likes_col),
+            patch("app.routers.feed.get_users_collection", return_value=users_col),
+        ):
+            result = await get_feed(page=0, current_user=me)
+
+        assert len(result["profiles"]) == 1
+        assert result["profiles"][0]["match_score"] >= 0
+
+
 class TestProfileShape:
     @pytest.mark.asyncio
     async def test_photo_url_is_always_none_in_feed(self):

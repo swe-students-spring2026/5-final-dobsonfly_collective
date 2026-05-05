@@ -251,6 +251,63 @@ class TestOtherUserHydration:
         assert other["photo_url"] is None
 
 
+class TestEdgeCases:
+    @pytest.mark.asyncio
+    async def test_is_new_true_when_seen_by_field_missing(self):
+        me_id = ObjectId()
+        other_id = ObjectId()
+        me = {"_id": me_id}
+        match = {
+            "_id": ObjectId(),
+            "user_ids": [str(me_id), str(other_id)],
+            # seen_by deliberately absent
+            "created_at": datetime.now(timezone.utc),
+        }
+        matches = _matches_col_with([match])
+        users = _users_col_returning({
+            "_id": other_id, "display_name": "Pat", "age": 27, "city": "NYC",
+            "spotify": {"top_genres": []}, "photo_url": None,
+        })
+
+        with (
+            patch("app.routers.matches.get_matches_collection", return_value=matches),
+            patch("app.routers.matches.get_users_collection", return_value=users),
+        ):
+            result = await get_matches(current_user=me)
+
+        assert result["matches"][0]["is_new"] is True
+
+    @pytest.mark.asyncio
+    async def test_other_user_with_partial_fields_does_not_crash(self):
+        me_id = ObjectId()
+        other_id = ObjectId()
+        me = {"_id": me_id}
+        match = {
+            "_id": ObjectId(),
+            "user_ids": [str(me_id), str(other_id)],
+            "seen_by": [],
+            "created_at": datetime.now(timezone.utc),
+        }
+        matches = _matches_col_with([match])
+        users = _users_col_returning({
+            "_id": other_id,
+            "display_name": "Sam",
+            # age and city deliberately absent
+        })
+
+        with (
+            patch("app.routers.matches.get_matches_collection", return_value=matches),
+            patch("app.routers.matches.get_users_collection", return_value=users),
+        ):
+            result = await get_matches(current_user=me)
+
+        other = result["matches"][0]["other_user"]
+        assert other["display_name"] == "Sam"
+        assert other["age"] == 0
+        assert other["city"] == ""
+        assert other["top_genres"] == []
+
+
 # ===========================================================================
 # PATCH /api/matches/{match_id}/seen
 # ===========================================================================

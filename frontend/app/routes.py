@@ -100,7 +100,10 @@ def spotify_connect():
     guard = _require_auth()
     if guard:
         return guard
-    url = api_client.get_spotify_connect_url(_token())
+    try:
+        url = api_client.get_spotify_connect_url(_token())
+    except Exception:
+        return redirect(url_for("main.settings"))
     return redirect(url)
 
 
