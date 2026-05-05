@@ -17,9 +17,9 @@ async def _build_match_entry(match: dict, current_user_id: str, users) -> dict:
         "match_id": str(match["_id"]),
         "other_user": {
             "user_id": other_id,
-            "display_name": other["display_name"] if other else "Unknown",
-            "age": other["age"] if other else 0,
-            "city": other["city"] if other else "",
+            "display_name": (other.get("display_name") or "Unknown") if other else "Unknown",
+            "age": (other.get("age") or 0) if other else 0,
+            "city": (other.get("city") or "") if other else "",
             "top_genres": ((other.get("spotify") or {}).get("top_genres") or []) if other else [],
             "photo_url": other.get("photo_url") if other else None,
         },
