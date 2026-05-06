@@ -22,83 +22,79 @@
       <span class="new-dot"></span> New
     </div>
     {% for m in new_matches %}
-    <a class="match-card is-new"
-       href="{{ url_for('main.profile_detail', user_id=m.user_id) }}"
-       data-match-id="{{ m.match_id }}"
-       onclick="markSeen('{{ m.match_id }}')">
-      {% if m.photo_url %}
-        <img class="match-photo" src="{{ m.photo_url }}" alt="{{ m.display_name }}" />
-      {% else %}
-        <div class="match-vinyl-sm">
-          <div class="vinyl-label">{{ m.display_name[:2].upper() }}</div>
-        </div>
-      {% endif %}
-      <div class="match-card-info">
-        <div class="match-card-name">{{ m.display_name }}, {{ m.age }}</div>
-        <div class="match-card-meta">{{ m.city }}</div>
-        <div class="match-card-genres">
-          {% for g in m.top_genres[:3] %}<span class="genre-tag">{{ g }}</span>{% endfor %}
-        </div>
-        {% if m.contact_info and (m.contact_info.instagram or m.contact_info.phone) %}
-        <div class="contact-row" style="margin-top:8px;">
-          {% if m.contact_info.instagram %}
-          <span class="contact-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-            </svg>
-            @{{ m.contact_info.instagram }}
-          </span>
-          {% endif %}
-          {% if m.contact_info.phone %}
-          <span class="contact-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.59 3.53 2 2 0 0 1 3.56 1.35h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l1.27-.73a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/>
-            </svg>
-            {{ m.contact_info.phone }}
-          </span>
-          {% endif %}
-        </div>
+    <div class="match-card is-new" data-match-id="{{ m.match_id }}">
+      <a class="match-card-link" href="{{ url_for('main.profile_detail', user_id=m.user_id) }}" onclick="markSeen('{{ m.match_id }}')">
+        {% if m.photo_url %}
+          <img class="match-photo" src="{{ m.photo_url }}" alt="{{ m.display_name }}" />
+        {% else %}
+          <div class="match-vinyl-sm">
+            <div class="vinyl-label">{{ m.display_name[:2].upper() }}</div>
+          </div>
         {% endif %}
+        <div class="match-card-info">
+          <div class="match-card-name">{{ m.display_name }}, {{ m.age }}</div>
+          <div class="match-card-meta">{{ m.city }}</div>
+          {% if m.email %}<div class="match-card-email">{{ m.email }}</div>{% endif %}
+          <div class="match-card-genres">
+            {% for g in m.top_genres[:3] %}<span class="genre-tag">{{ g }}</span>{% endfor %}
+          </div>
+        </div>
+      </a>
+      {% if m.last_message %}
+      <div class="match-last-msg">
+        <span class="match-last-msg-text">{{ 'You: ' if m.last_message.is_mine else '' }}{{ m.last_message.text }}</span>
+        <span class="match-last-msg-time">{{ m.last_message.sent_at }}</span>
       </div>
-      <span class="match-new-badge">New</span>
-    </a>
+      {% endif %}
+      <div class="match-card-actions">
+        <a class="match-chat-btn" href="{{ url_for('main.chat', match_id=m.match_id) }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Message
+        </a>
+        <span class="match-new-badge">New</span>
+      </div>
+    </div>
     {% endfor %}
     {% endif %}
 
     {% if old_matches %}
     <div class="matches-section-label">Previous</div>
     {% for m in old_matches %}
-    <a class="match-card"
-       href="{{ url_for('main.profile_detail', user_id=m.user_id) }}">
-      {% if m.photo_url %}
-        <img class="match-photo" src="{{ m.photo_url }}" alt="{{ m.display_name }}" />
-      {% else %}
-        <div class="match-vinyl-sm">
-          <div class="vinyl-label">{{ m.display_name[:2].upper() }}</div>
-        </div>
-      {% endif %}
-      <div class="match-card-info">
-        <div class="match-card-name">{{ m.display_name }}, {{ m.age }}</div>
-        <div class="match-card-meta">{{ m.city }}</div>
-        <div class="match-card-genres">
-          {% for g in m.top_genres[:3] %}<span class="genre-tag">{{ g }}</span>{% endfor %}
-        </div>
-        {% if m.contact_info and (m.contact_info.get('instagram') or m.contact_info.get('phone')) %}
-        <div class="contact-row" style="margin-top:8px;">
-          {% if m.contact_info.instagram %}
-          <span class="contact-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-            </svg>
-            @{{ m.contact_info.instagram }}
-          </span>
-          {% endif %}
-        </div>
+    <div class="match-card">
+      <a class="match-card-link" href="{{ url_for('main.profile_detail', user_id=m.user_id) }}">
+        {% if m.photo_url %}
+          <img class="match-photo" src="{{ m.photo_url }}" alt="{{ m.display_name }}" />
+        {% else %}
+          <div class="match-vinyl-sm">
+            <div class="vinyl-label">{{ m.display_name[:2].upper() }}</div>
+          </div>
         {% endif %}
+        <div class="match-card-info">
+          <div class="match-card-name">{{ m.display_name }}, {{ m.age }}</div>
+          <div class="match-card-meta">{{ m.city }}</div>
+          {% if m.email %}<div class="match-card-email">{{ m.email }}</div>{% endif %}
+          <div class="match-card-genres">
+            {% for g in m.top_genres[:3] %}<span class="genre-tag">{{ g }}</span>{% endfor %}
+          </div>
+        </div>
+      </a>
+      {% if m.last_message %}
+      <div class="match-last-msg">
+        <span class="match-last-msg-text">{{ 'You: ' if m.last_message.is_mine else '' }}{{ m.last_message.text }}</span>
+        <span class="match-last-msg-time">{{ m.last_message.sent_at }}</span>
       </div>
-    </a>
+      {% endif %}
+      <div class="match-card-actions">
+        <a class="match-chat-btn" href="{{ url_for('main.chat', match_id=m.match_id) }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Message
+        </a>
+      </div>
+    </div>
     {% endfor %}
     {% endif %}
   {% endif %}

@@ -1,3 +1,5 @@
+import re
+
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -11,7 +13,12 @@ _PAGE_SIZE = 10
 
 
 @router.get("/feed")
-async def get_feed(page: int = 0, current_user: dict = Depends(get_current_user)):
+async def get_feed(
+    page: int = 0,
+    search: str | None = None,
+    city: str | None = None,
+    current_user: dict = Depends(get_current_user),
+):
     if not current_user.get("is_spotify_connected"):
         raise HTTPException(status_code=403, detail="spotify_required")
 
@@ -28,15 +35,11 @@ async def get_feed(page: int = 0, current_user: dict = Depends(get_current_user)
         "is_spotify_connected": True,
     }
 
-    if current_user.get("gender_preference") and current_user["gender_preference"] != "any":
-        query["gender"] = current_user["gender_preference"]
+    if search:
+        query["display_name"] = {"$regex": re.escape(search.strip()), "$options": "i"}
+    if city:
+        query["city"] = {"$regex": re.escape(city.strip()), "$options": "i"}
 
-    age_pref = current_user.get("age_range_preference")
-    if age_pref:
-        query["age"] = {"$gte": age_pref["min"], "$lte": age_pref["max"]}
-
-    if current_user.get("city"):
-        query["city"] = current_user["city"]
 
     users = get_users_collection()
     candidates = []

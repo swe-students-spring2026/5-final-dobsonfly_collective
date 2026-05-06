@@ -15,15 +15,18 @@ Match through music. Photos stay hidden until you both like each other.
 | Aryaman Nagpal | Infrastructure (DevOps + MongoDB) |
 
 ---
+## Deployment Link
 
-## Setup
+## Deplot Locally
 
 ```bash
 cp .env.example .env
-# fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, and any other required values
+# fill in .env values — see Discord/Teams for shared secrets
 ```
 
 **Run everything with Docker:**
+
+Open Docker desktop
 
 ```bash
 docker-compose up --build
@@ -31,6 +34,8 @@ docker-compose up --build
 # frontend: http://localhost:3000
 # mongo:    localhost:27017
 ```
+open http://localhost:3000
+
 
 **Or run subsystems individually (no Docker):**
 

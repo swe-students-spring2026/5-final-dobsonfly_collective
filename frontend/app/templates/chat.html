@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}vibe — chat{% endblock %}
+{% block body %}
+
+<div class="chat-page">
+  <div class="chat-header">
+    <a href="{{ url_for('main.matches') }}" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </a>
+    <div class="chat-header-info">
+      <div class="chat-vinyl-sm">
+        <div class="vinyl-label">{{ other.display_name[:2].upper() if other.display_name else '??' }}</div>
+      </div>
+      <div>
+        <div class="chat-header-name">{{ other.display_name or 'Unknown' }}</div>
+        <div class="chat-header-meta">{{ other.city or '' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    {% for msg in messages %}
+    <div class="chat-bubble {{ 'mine' if msg.is_mine else 'theirs' }}">
+      <div class="bubble-text">{{ msg.text }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="chat-input-bar">
+    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message…" autocomplete="off" />
+    <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const MATCH_ID = "{{ match_id }}";
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+let lastCount = {{ messages | length }};
+
+function scrollBottom() {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderBubble(msg) {
+  const div = document.createElement("div");
+  div.className = "chat-bubble " + (msg.is_mine ? "mine" : "theirs");
+  div.innerHTML = `<div class="bubble-text">${escapeHtml(msg.text)}</div>`;
+  return div;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  chatInput.value = "";
+  try {
+    const resp = await fetch(`/api/matches/${MATCH_ID}/messages`, {
+      method: "POST",
+      credentials: "include",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text}),
+    });
+    if (resp.ok) {
+      const msg = await resp.json();
+      chatMessages.appendChild(renderBubble({...msg, is_mine: true}));
+      lastCount++;
+      scrollBottom();
+    }
+  } catch(_) {}
+}
+
+async function pollMessages() {
+  try {
+    const resp = await fetch(`/api/matches/${MATCH_ID}/messages`, {credentials: "include"});
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const msgs = data.messages || [];
+    if (msgs.length > lastCount) {
+      const newMsgs = msgs.slice(lastCount);
+      newMsgs.forEach(msg => chatMessages.appendChild(renderBubble(msg)));
+      lastCount = msgs.length;
+      scrollBottom();
+    }
+  } catch(_) {}
+}
+
+chatInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
+
+scrollBottom();
+setInterval(pollMessages, 3000);
+</script>
+{% endblock %}

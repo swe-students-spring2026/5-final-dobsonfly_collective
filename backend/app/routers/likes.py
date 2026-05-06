@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime, timezone
 
 from bson import ObjectId
@@ -5,6 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import get_current_user
 from app.database import get_likes_collection, get_matches_collection, get_users_collection
+
+
+def _auto_likes_back(from_id: str, to_id: str) -> bool:
+    """60% of seed users auto-like back, deterministic per pair."""
+    h = int(hashlib.md5(f"{from_id}{to_id}".encode()).hexdigest(), 16)
+    return (h % 100) < 60
 
 router = APIRouter(prefix="/api/likes", tags=["likes"])
 
@@ -43,6 +50,14 @@ async def like_user(user_id: str, current_user: dict = Depends(get_current_user)
 
     await likes_col.insert_one({"from_user_id": from_id, "to_user_id": user_id, "created_at": now})
     await users.update_one({"_id": current_user["_id"]}, {"$inc": {"likes_sent_today": 1}})
+
+    # Seed users (admin*@nyu.edu) auto-like back 60% of the time
+    target_email = target.get("email", "")
+    if target_email.startswith("admin") and target_email.endswith("@nyu.edu"):
+        if _auto_likes_back(from_id, user_id):
+            existing_reverse = await likes_col.find_one({"from_user_id": user_id, "to_user_id": from_id})
+            if not existing_reverse:
+                await likes_col.insert_one({"from_user_id": user_id, "to_user_id": from_id, "created_at": now})
 
     reverse = await likes_col.find_one({"from_user_id": user_id, "to_user_id": from_id})
     if reverse:

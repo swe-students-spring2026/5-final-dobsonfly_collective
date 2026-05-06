@@ -116,6 +116,15 @@ def spotify_disconnect():
     return redirect(url_for("main.settings"))
 
 
+@bp.route("/spotify/sync", methods=["POST"])
+def spotify_sync():
+    guard = _require_auth()
+    if guard:
+        return guard
+    api_client.sync_spotify(_token())
+    return redirect(url_for("main.settings"))
+
+
 # ── Profile setup ─────────────────────────────────────────────────────────────
 
 @bp.route("/profile/setup", methods=["GET", "POST"])
@@ -190,10 +199,64 @@ def matches():
     if guard:
         return guard
     try:
-        match_list = api_client.get_matches(_token())
+        raw = api_client.get_matches(_token())
+        match_list = []
+        for m in raw:
+            if "other_user" in m:
+                entry = {**m["other_user"], "match_id": m["match_id"], "is_new": m.get("is_new", False), "last_message": m.get("last_message")}
+            else:
+                entry = dict(m)
+                entry.setdefault("last_message", None)
+                entry.setdefault("is_new", False)
+            match_list.append(entry)
     except Exception:
         match_list = []
     return render_template("matches.html", matches=match_list)
+
+
+# ── Chat ─────────────────────────────────────────────────────────────────────
+
+@bp.route("/chat/<match_id>")
+def chat(match_id):
+    guard = _require_auth()
+    if guard:
+        return guard
+    try:
+        me = api_client.get_me(_token())
+        raw = api_client.get_matches(_token())
+        match = next((m for m in raw if m["match_id"] == match_id), None)
+        other = match["other_user"] if match else {}
+        messages = api_client.get_messages(_token(), match_id)
+    except Exception:
+        other = {}
+        messages = []
+    return render_template("chat.html", match_id=match_id, other=other, messages=messages, my_id=me.get("user_id") if me else "")
+
+
+@bp.route("/api/matches/<match_id>/messages", methods=["GET"])
+def proxy_get_messages(match_id):
+    guard = _require_auth()
+    if guard:
+        return guard
+    try:
+        msgs = api_client.get_messages(_token(), match_id)
+        return {"messages": msgs}
+    except Exception:
+        return {"messages": []}
+
+
+@bp.route("/api/matches/<match_id>/messages", methods=["POST"])
+def proxy_send_message(match_id):
+    guard = _require_auth()
+    if guard:
+        return guard
+    from flask import request as flask_request
+    text = (flask_request.json or {}).get("text", "")
+    try:
+        msg = api_client.send_message(_token(), match_id, text)
+        return msg, 201
+    except Exception as e:
+        return {"detail": str(e)}, 400
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
