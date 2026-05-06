@@ -235,11 +235,12 @@ class TestGetMatchesCollection:
 @pytest.fixture()
 def mock_collections():
     """Return (mock_users, mock_likes, mock_matches) with patched accessors."""
-    mu, ml, mm = AsyncMock(), AsyncMock(), AsyncMock()
+    mu, ml, mm, mmsgs = AsyncMock(), AsyncMock(), AsyncMock(), AsyncMock()
     with (
         patch("app.database.get_users_collection", return_value=mu),
         patch("app.database.get_likes_collection", return_value=ml),
         patch("app.database.get_matches_collection", return_value=mm),
+        patch("app.database.get_messages_collection", return_value=mmsgs),
     ):
         yield mu, ml, mm
 

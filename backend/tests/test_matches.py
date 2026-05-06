@@ -45,6 +45,19 @@ from app.routers.matches import get_matches, mark_seen
 
 
 # ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def mock_messages_collection():
+    """Patch get_messages_collection so tests never touch real MongoDB."""
+    msgs = AsyncMock()
+    msgs.find_one = AsyncMock(return_value=None)
+    with patch("app.routers.matches.get_messages_collection", return_value=msgs):
+        yield msgs
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

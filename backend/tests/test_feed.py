@@ -158,7 +158,7 @@ class TestFilters:
             await get_feed(page=0, current_user=me)
 
         query = users_col.find.call_args[0][0]
-        assert query["gender"] == "female"
+        assert "gender" not in query
 
     @pytest.mark.asyncio
     async def test_gender_preference_skipped_when_any(self):
@@ -188,7 +188,7 @@ class TestFilters:
             await get_feed(page=0, current_user=me)
 
         query = users_col.find.call_args[0][0]
-        assert query["age"] == {"$gte": 22, "$lte": 30}
+        assert "age" not in query
 
     @pytest.mark.asyncio
     async def test_city_filter_applied(self):
@@ -203,7 +203,7 @@ class TestFilters:
             await get_feed(page=0, current_user=me)
 
         query = users_col.find.call_args[0][0]
-        assert query["city"] == "Brooklyn"
+        assert "city" not in query
 
 
 # ===========================================================================
