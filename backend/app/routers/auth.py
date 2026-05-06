@@ -35,7 +35,7 @@ def _user_to_dict(user: dict) -> dict:
         "bio": user.get("bio"),
         "gender": user.get("gender"),
         "gender_preference": user.get("gender_preference"),
-        "age_range_preference": user.get("age_range_preference"),
+        "age_range_preference": user.get("age_range_preference") or {"min": 18, "max": 99},
         "photo_url": user.get("photo_url"),
         "contact_info": user.get("contact_info") or {"phone": None, "instagram": None},
         "top_genres": spotify.get("top_genres") or [],

@@ -15,19 +15,24 @@ Match through music. Photos stay hidden until you both like each other.
 | Aryaman Nagpal | Infrastructure (DevOps + MongoDB) |
 
 ---
+## Deployment Link
 
-## Setup
+## Deplot Locally
 
 ```bash
 cp .env.example .env
-# fill in .env
+# fill in .env / check discord teams channel 
 ```
 
 **Run everything with Docker:**
 
+Open Docker desktop
+
 ```bash
 docker-compose up --build
 ```
+open http://localhost:3000
+
 
 **Or run subsystems individually:**
 

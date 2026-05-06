@@ -131,7 +131,7 @@ def get_matches(token):
         return mock_data.MOCK_MATCHES
     resp = requests.get(_url("/api/matches"), cookies=_cookies(token), timeout=10)
     resp.raise_for_status()
-    return resp.json()
+    return resp.json().get("matches", [])
 
 
 def mark_match_seen(token, match_id):
