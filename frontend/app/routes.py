@@ -200,10 +200,15 @@ def matches():
         return guard
     try:
         raw = api_client.get_matches(_token())
-        match_list = [
-            {**m.get("other_user", {}), "match_id": m["match_id"], "is_new": m.get("is_new", False), "last_message": m.get("last_message")}
-            for m in raw
-        ]
+        match_list = []
+        for m in raw:
+            if "other_user" in m:
+                entry = {**m["other_user"], "match_id": m["match_id"], "is_new": m.get("is_new", False), "last_message": m.get("last_message")}
+            else:
+                entry = dict(m)
+                entry.setdefault("last_message", None)
+                entry.setdefault("is_new", False)
+            match_list.append(entry)
     except Exception:
         match_list = []
     return render_template("matches.html", matches=match_list)

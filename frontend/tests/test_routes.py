@@ -623,7 +623,7 @@ def test_ac_unlike_user_real(monkeypatch):
 def test_ac_get_matches_real(monkeypatch):
     _real(monkeypatch)
     mock_resp = MagicMock()
-    mock_resp.json.return_value = MOCK_MATCHES
+    mock_resp.json.return_value = {"matches": MOCK_MATCHES}
     with patch("app.api_client.requests.get", return_value=mock_resp):
         data = _ac.get_matches("tok")
     assert len(data) == 1
