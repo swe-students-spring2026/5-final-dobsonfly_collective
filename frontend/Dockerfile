@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["flask", "--app", "app.main", "run", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:3000", "--workers", "2"]

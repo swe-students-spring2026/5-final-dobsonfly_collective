@@ -72,12 +72,15 @@ async def upload_photo(
         api_secret=s.cloudinary_api_secret,
     )
     user_id = str(current_user["_id"])
-    result = cloudinary.uploader.upload(
-        contents,
-        public_id=user_id,
-        folder=f"vibe/profile_photos/{user_id}",
-        overwrite=True,
-    )
+    try:
+        result = cloudinary.uploader.upload(
+            contents,
+            public_id=user_id,
+            folder=f"vibe/profile_photos/{user_id}",
+            overwrite=True,
+        )
+    except Exception:
+        raise HTTPException(status_code=503, detail="Photo upload not configured")
     photo_url = result["secure_url"]
 
     users = get_users_collection()

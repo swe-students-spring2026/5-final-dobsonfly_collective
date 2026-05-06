@@ -56,7 +56,6 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vibe-frontend:latest
             docker stop vibe-frontend || true
             docker rm vibe-frontend || true
-            docker run -d --name vibe-frontend --env-file /opt/vibe/.env \
-              --network vibe-net \
+            docker run -d --name vibe-frontend --network vibe-net --env-file /opt/vibe/.env \
               -e BACKEND_URL=http://vibe-backend:8000 \
               -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/vibe-frontend:latest

@@ -659,3 +659,99 @@ def test_ac_upload_photo_real(monkeypatch):
     with patch("app.api_client.requests.post", return_value=mock_resp):
         data = _ac.upload_photo("tok", b"bytes", "image/jpeg")
     assert data["user_id"] == "u1"
+
+
+# ── Photo upload in profile setup ─────────────────────────────────────────────
+
+import io
+
+
+def test_profile_setup_post_with_photo(ac):
+    with patch("app.routes.api_client.update_profile", return_value=MOCK_USER), \
+         patch("app.routes.api_client.upload_photo", return_value=MOCK_USER) as mock_up:
+        resp = ac.post(
+            "/profile/setup",
+            data={
+                "bio": "hi", "gender": "non-binary", "gender_preference": "",
+                "age_min": "18", "age_max": "30",
+                "photo": (io.BytesIO(b"fake_image_bytes"), "photo.jpg"),
+            },
+            content_type="multipart/form-data",
+        )
+    assert resp.status_code == 302
+    mock_up.assert_called_once()
+
+
+def test_profile_setup_post_with_photo_upload_error(ac):
+    with patch("app.routes.api_client.update_profile", return_value=MOCK_USER), \
+         patch("app.routes.api_client.upload_photo", side_effect=Exception("upload failed")):
+        resp = ac.post(
+            "/profile/setup",
+            data={
+                "bio": "hi", "age_min": "18", "age_max": "30",
+                "photo": (io.BytesIO(b"fake_image_bytes"), "photo.jpg"),
+            },
+            content_type="multipart/form-data",
+        )
+    assert resp.status_code == 302  # exception is silently caught, still redirects
+
+
+# ── Photo upload in settings ──────────────────────────────────────────────────
+
+
+def test_settings_post_with_photo(ac):
+    with patch("app.routes.api_client.update_profile", return_value=MOCK_USER), \
+         patch("app.routes.api_client.upload_photo", return_value=MOCK_USER) as mock_up, \
+         patch("app.routes.api_client.get_me", return_value=MOCK_USER):
+        resp = ac.post(
+            "/settings",
+            data={
+                "display_name": "New Name", "city": "Brooklyn", "bio": "hi",
+                "age": "24", "gender": "non-binary", "gender_preference": "",
+                "age_min": "20", "age_max": "30", "instagram": "", "phone": "",
+                "photo": (io.BytesIO(b"fake_image_bytes"), "photo.jpg"),
+            },
+            content_type="multipart/form-data",
+        )
+    assert resp.status_code == 200
+    assert b"updated" in resp.data
+    mock_up.assert_called_once()
+
+
+def test_settings_post_with_photo_upload_error(ac):
+    with patch("app.routes.api_client.update_profile", return_value=MOCK_USER), \
+         patch("app.routes.api_client.upload_photo", side_effect=Exception("upload failed")), \
+         patch("app.routes.api_client.get_me", return_value=MOCK_USER):
+        resp = ac.post(
+            "/settings",
+            data={
+                "display_name": "X", "city": "", "bio": "", "age": "",
+                "gender": "", "gender_preference": "", "age_min": "", "age_max": "",
+                "instagram": "", "phone": "",
+                "photo": (io.BytesIO(b"fake_image_bytes"), "photo.jpg"),
+            },
+            content_type="multipart/form-data",
+        )
+    assert resp.status_code == 200  # exception caught, success=None, page still renders
+
+
+# ── Spotify connect error handling ────────────────────────────────────────────
+
+
+def test_settings_post_get_me_fails_after_update(ac):
+    with patch("app.routes.api_client.update_profile", return_value=MOCK_USER), \
+         patch("app.routes.api_client.get_me", side_effect=Exception("err")):
+        resp = ac.post(
+            "/settings",
+            data={"display_name": "X", "city": "", "bio": "", "age": "",
+                  "gender": "", "gender_preference": "", "age_min": "", "age_max": "",
+                  "instagram": "", "phone": ""},
+        )
+    assert resp.status_code == 200
+
+
+def test_spotify_connect_error_redirects_to_settings(ac):
+    with patch("app.routes.api_client.get_spotify_connect_url", side_effect=Exception("backend down")):
+        resp = ac.get("/spotify/connect")
+    assert resp.status_code == 302
+    assert "/settings" in resp.headers["Location"]
