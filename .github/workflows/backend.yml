@@ -63,8 +63,10 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
+            docker network create vibe-net || true
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vibe-backend:latest
             docker stop vibe-backend || true
             docker rm vibe-backend || true
             docker run -d --name vibe-backend --env-file /opt/vibe/.env \
+              --network vibe-net \
               -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/vibe-backend:latest
