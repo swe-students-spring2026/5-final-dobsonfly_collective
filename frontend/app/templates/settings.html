@@ -28,20 +28,35 @@
       </span>
     </div>
     {% if user.get('is_spotify_connected') %}
-    <form method="POST" action="{{ url_for('main.spotify_disconnect') }}">
-      <button type="submit" class="btn btn-secondary btn-full btn-sm">Disconnect Spotify</button>
-    </form>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <form method="POST" action="{{ url_for('main.spotify_sync') }}" style="flex:1;">
+        <button type="submit" class="btn btn-primary btn-full btn-sm">Sync music data</button>
+      </form>
+      <form method="POST" action="{{ url_for('main.spotify_disconnect') }}" style="flex:1;">
+        <button type="submit" class="btn btn-secondary btn-full btn-sm">Disconnect</button>
+      </form>
+    </div>
     {% else %}
     <a href="{{ url_for('main.spotify_connect') }}" class="btn btn-spotify btn-full">
       Connect Spotify
     </a>
     {% endif %}
-    {% if user.get('spotify', {}).get('top_genres') %}
+    {% if user.get('top_genres') %}
     <div style="margin-top:14px;">
-      <div class="settings-section-title" style="margin-bottom:8px;">Your genres</div>
+      <div class="settings-section-title" style="margin-bottom:8px;">Your top genres</div>
       <div class="genre-list">
-        {% for g in user.spotify.top_genres[:8] %}
+        {% for g in user.get('top_genres', []) %}
         <span class="genre-tag">{{ g }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if user.get('top_artists') %}
+    <div style="margin-top:14px;">
+      <div class="settings-section-title" style="margin-bottom:8px;">Your top artists</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for a in user.get('top_artists', []) %}
+        <span style="background:var(--surface-2);color:var(--text-muted);border-radius:20px;padding:4px 12px;font-size:0.82rem;">{{ a.name }}</span>
         {% endfor %}
       </div>
     </div>

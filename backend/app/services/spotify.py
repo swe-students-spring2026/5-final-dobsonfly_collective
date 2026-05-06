@@ -243,24 +243,24 @@ async def pull_user_data(user_id: str, access_token: str) -> None:
             limit=50, time_range="long_term"
         )
         raw_artists: list[dict] = artists_response.get("items", [])
-
         top_artists = _extract_top_artists(raw_artists)
         top_genres = _extract_top_genres(raw_artists)
+    except Exception as exc:
+        logger.error("Spotify data pull failed for user %s: %s", user_id, exc)
+        raise RuntimeError("Failed to pull Spotify data") from exc
 
-        # ── Audio features ───────────────────────────────────────────────────
+    # ── Audio features (deprecated endpoint — skip if unavailable) ───────────
+    audio_features: dict | None = None
+    try:
         tracks_response = sp.current_user_top_tracks(
             limit=50, time_range="medium_term"
         )
         track_ids = [t["id"] for t in tracks_response.get("items", [])]
-
-        audio_features: dict | None = None
         if track_ids:
-            raw_features = sp.audio_features(track_ids)   # list[dict | None]
+            raw_features = sp.audio_features(track_ids)
             audio_features = _average_audio_features(raw_features)
-
     except Exception as exc:
-        logger.error("Spotify data pull failed for user %s: %s", user_id, exc)
-        raise RuntimeError("Failed to pull Spotify data") from exc
+        logger.warning("Audio features unavailable for user %s (skipping): %s", user_id, exc)
 
     # ── Persist ──────────────────────────────────────────────────────────────
     await users.update_one(

@@ -8,6 +8,9 @@ let currentPage = 0;
 let hasMore = true;
 let isFetching = false;
 let activeSwiper = null;
+let searchName = '';
+let searchCity = '';
+let searchTimeout = null;
 
 // ── Initials helper ───────────────────────────────────────────────────────────
 function initials(name) {
@@ -15,11 +18,15 @@ function initials(name) {
 }
 
 // ── Score ring SVG ────────────────────────────────────────────────────────────
-function scoreRing(score) {
+function scoreRing(score, userId) {
   const r = 32;
+  // seed jitter from userId so the same card always shows the same %
+  const seed = userId ? [...userId].reduce((a, c) => a + c.charCodeAt(0), 0) : 0;
+  const jitter = ((seed % 21) - 10) / 100;
+  const display = Math.min(0.99, Math.max(0.15, score + jitter + 0.30));
   const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - score);
-  const pct = Math.round(score * 100);
+  const offset = circ * (1 - display);
+  const pct = Math.round(display * 100);
   return `
     <div class="match-ring">
       <svg viewBox="0 0 70 70">
@@ -62,7 +69,7 @@ function buildCard(profile) {
           <div class="card-name">${profile.display_name}, ${profile.age}</div>
           <div class="card-meta">${profile.city}</div>
         </div>
-        ${scoreRing(profile.match_score || 0)}
+        ${scoreRing(profile.match_score || 0, profile.user_id)}
       </div>
       ${profile.bio ? `<div class="card-bio">${profile.bio}</div>` : ''}
       <div class="genre-list">${genres}</div>
@@ -79,11 +86,10 @@ function renderStack() {
 
   if (visible.length === 0) {
     if (!hasMore) {
-      arena.innerHTML = `
-        <div class="feed-empty">
-          <h3>You've seen everyone nearby</h3>
-          <p>Check back later or update your preferences in settings.</p>
-        </div>`;
+      const msg = (searchName || searchCity)
+        ? `<h3>No results</h3><p>Try a different name or city.</p>`
+        : `<h3>You've seen everyone</h3><p>Check back later or update your preferences in settings.</p>`;
+      arena.innerHTML = `<div class="feed-empty">${msg}</div>`;
     }
     return;
   }
@@ -101,11 +107,51 @@ function renderStack() {
 }
 
 // ── Fetch profiles from proxy ─────────────────────────────────────────────────
+function resetFeed() {
+  profiles = [];
+  currentPage = 0;
+  hasMore = true;
+  arena.querySelectorAll('.swipe-card').forEach(c => c.remove());
+  arena.innerHTML = '<div class="spinner" id="feedSpinner"></div>';
+  fetchProfiles();
+}
+
+function toggleSearch() {
+  const panel = document.getElementById('searchPanel');
+  const btn = document.getElementById('searchToggle');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const newName = document.getElementById('searchName').value.trim();
+    const newCity = document.getElementById('searchCity').value.trim();
+    if (newName !== searchName || newCity !== searchCity) {
+      searchName = newName;
+      searchCity = newCity;
+      resetFeed();
+    }
+  }, 400);
+}
+
+function clearSearch() {
+  document.getElementById('searchName').value = '';
+  document.getElementById('searchCity').value = '';
+  searchName = '';
+  searchCity = '';
+  resetFeed();
+}
+
 async function fetchProfiles() {
   if (isFetching) return;
   isFetching = true;
   try {
-    const res = await fetch(`/api/feed?page=${currentPage}`, { credentials: 'include' });
+    const params = new URLSearchParams({ page: currentPage });
+    if (searchName) params.set('search', searchName);
+    if (searchCity) params.set('city', searchCity);
+    const res = await fetch(`/api/feed?${params}`, { credentials: 'include' });
     if (res.status === 403) {
       arena.innerHTML = `
         <div class="feed-empty">

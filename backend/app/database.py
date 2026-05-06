@@ -27,6 +27,10 @@ def get_matches_collection():
     return get_database()["matches"]
 
 
+def get_messages_collection():
+    return get_database()["messages"]
+
+
 async def create_indexes():
     users = get_users_collection()
     await users.create_index("email", unique=True)
@@ -39,3 +43,6 @@ async def create_indexes():
 
     matches = get_matches_collection()
     await matches.create_index("user_ids")
+
+    messages = get_messages_collection()
+    await messages.create_index([("match_id", 1), ("created_at", 1)])

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import create_indexes
-from app.routers import auth, feed, likes, matches, spotify, users
+from app.routers import auth, feed, likes, matches, messages, spotify, users
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 
@@ -32,3 +32,4 @@ app.include_router(users.router)
 app.include_router(feed.router)
 app.include_router(likes.router)
 app.include_router(matches.router)
+app.include_router(messages.router)

@@ -60,6 +60,23 @@ async def spotify_callback(
     return RedirectResponse(url=f"{settings.frontend_url}/profile/setup")
 
 
+@router.post("/sync")
+async def spotify_sync(current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    try:
+        access_token = await spotify_service.refresh_token(user_id)
+    except RuntimeError:
+        access_token = (current_user.get("spotify") or {}).get("access_token")
+        if not access_token:
+            raise HTTPException(status_code=400, detail="No Spotify tokens stored — reconnect Spotify")
+    try:
+        await spotify_service.pull_user_data(user_id=user_id, access_token=access_token)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    logger.info("Manual Spotify sync completed for user %s", user_id)
+    return {"detail": "Spotify data synced"}
+
+
 @router.post("/disconnect")
 async def spotify_disconnect(current_user: dict = Depends(get_current_user)):
     user_id = str(current_user["_id"])

@@ -98,6 +98,12 @@ def disconnect_spotify(token):
     requests.post(_url("/api/spotify/disconnect"), cookies=_cookies(token), timeout=10)
 
 
+def sync_spotify(token):
+    if config.MOCK_MODE:
+        return
+    requests.post(_url("/api/spotify/sync"), cookies=_cookies(token), timeout=30)
+
+
 # ── Feed ──────────────────────────────────────────────────────────────────────
 
 def get_feed(token, page=0):
@@ -138,3 +144,26 @@ def mark_match_seen(token, match_id):
     if config.MOCK_MODE:
         return
     requests.patch(_url(f"/api/matches/{match_id}/seen"), cookies=_cookies(token), timeout=10)
+
+
+# ── Messages ──────────────────────────────────────────────────────────────────
+
+def get_messages(token, match_id):
+    if config.MOCK_MODE:
+        return []
+    resp = requests.get(_url(f"/api/matches/{match_id}/messages"), cookies=_cookies(token), timeout=10)
+    resp.raise_for_status()
+    return resp.json().get("messages", [])
+
+
+def send_message(token, match_id, text):
+    if config.MOCK_MODE:
+        return {}
+    resp = requests.post(
+        _url(f"/api/matches/{match_id}/messages"),
+        json={"text": text},
+        cookies=_cookies(token),
+        timeout=10,
+    )
+    resp.raise_for_status()
+    return resp.json()
