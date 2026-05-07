@@ -15,9 +15,23 @@ Match through music. Photos stay hidden until you both like each other.
 | Aryaman Nagpal | Infrastructure (DevOps + MongoDB) |
 
 ---
-## Deployment Link
+## Live Demo
 
-## Deplot Locally
+**URL:** http://174.138.42.115:3000
+
+**Demo accounts (no Spotify required — music data pre-seeded):**
+
+| Email | Password |
+|---|---|
+| `admin1@nyu.edu` | `12345678` |
+| `admin2@nyu.edu` | `12345678` |
+| `admin3@nyu.edu` | `12345678` |
+
+Any account from `admin1@nyu.edu` through `admin100@nyu.edu` works with password `12345678`. These accounts have pre-seeded Spotify data (genres, artists, match scores) so the full feed, matching, and chat features are available immediately without connecting Spotify.
+
+---
+
+## Deploy Locally
 
 ```bash
 cp .env.example .env
@@ -83,10 +97,8 @@ Test files bootstrap their own env vars via `os.environ.setdefault`, so no `.env
 
 | Subsystem | Tests | Coverage | CI threshold |
 |---|---|---|---|
-| Backend | 80 passing | 37% | 40% (temp) — raise to 80% as router tests land |
-| Frontend | 72 passing | 94% | 80% ✓ |
-
-The backend CI threshold is temporarily set to 40% (`backend.yml` line 34, marked `# CHANGE`). It must be raised back to 80% once tests for the auth, users, feed, likes, matches, and matching routers are written.
+| Backend | 186 passing | 91% | 80% ✓ |
+| Frontend | 78 passing | 83% | 80% ✓ |
 
 ---
 
@@ -99,7 +111,7 @@ Defined in [`.github/workflows/`](.github/workflows/).
 - `push` → `main` (i.e. PR merged): tests → Docker build+push → Digital Ocean deploy
 
 **Backend pipeline** (`backend.yml`):
-1. `pytest --cov=app --cov-fail-under=40` (temp)
+1. `pytest --cov=app --cov-fail-under=80`
 2. `docker build` → push `vibe-backend:latest` to Docker Hub
 3. SSH into DO droplet → `docker pull` + `docker run`
 
