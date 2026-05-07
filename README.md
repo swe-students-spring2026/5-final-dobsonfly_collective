@@ -16,6 +16,7 @@ Match through music. Photos stay hidden until you both like each other.
 
 ---
 ## Deployment Link
+Access our project at http://174.138.42.115:3000/login
 
 ## Deploy Locally
 
