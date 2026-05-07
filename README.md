@@ -15,21 +15,8 @@ Match through music. Photos stay hidden until you both like each other.
 | Aryaman Nagpal | Infrastructure (DevOps + MongoDB) |
 
 ---
-## Live Demo
-
-**URL:** http://174.138.42.115:3000
-
-**Demo accounts (no Spotify required — music data pre-seeded):**
-
-| Email | Password |
-|---|---|
-| `admin1@nyu.edu` | `12345678` |
-| `admin2@nyu.edu` | `12345678` |
-| `admin3@nyu.edu` | `12345678` |
-
-Any account from `admin1@nyu.edu` through `admin100@nyu.edu` works with password `12345678`. These accounts have pre-seeded Spotify data (genres, artists, match scores) so the full feed, matching, and chat features are available immediately without connecting Spotify.
-
----
+## Deployment Link
+Access our project at http://174.138.42.115:3000/login
 
 ## Deploy Locally
 
