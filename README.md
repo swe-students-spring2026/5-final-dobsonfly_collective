@@ -17,7 +17,7 @@ Match through music. Photos stay hidden until you both like each other.
 ---
 ## Deployment Link
 
-## Deplot Locally
+## Deploy Locally
 
 ```bash
 cp .env.example .env
